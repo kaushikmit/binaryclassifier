@@ -28,9 +28,7 @@ def get_categories(datasetpath):
                   if isdir(files)]
     cat_paths.sort()
     #storing the categories
-    print cat_paths
     cats = [basename(cat_path) for cat_path in cat_paths]
-
     return cats
 
 
@@ -56,7 +54,6 @@ def dict2numpy(dict):
         array[pivot:pivot + nelements] = value
         pivot += nelements
     array = resize(array, (pivot, 128))
-
     return array
 
 def extractSift(input_files):
@@ -103,32 +100,38 @@ def writeHistogramsToFile(nwords, labels, fnames, all_word_histgrams, features_f
 if __name__ == '__main__':
     print "---------------------"
     print "## loading the images and extracting the sift features"
+    #loading the command line arguments
     args = parse_arguments()
     datasetpath = args.d
     cats = get_categories(datasetpath)
     ncats = len(cats)
     print "searching for folders at " + datasetpath
+    #exception for no categories
     if ncats < 1:
         raise ValueError('Only ' + str(ncats) + ' categories found. Wrong path?')
     print "found following folders / categories:"
     print cats
     print "---------------------"    
+
     all_files = []
     all_files_labels = {}
     all_features = {}
     cat_label = {}
     for cat, label in zip(cats, range(ncats)):
         cat_path = join(datasetpath, cat)
+        print cat_path
         cat_files = get_imgfiles(cat_path)
+        #getting dictionary of feature descriptors
         cat_features = extractSift(cat_files)
-        all_files = all_files + cat_files
+        all_files += cat_files
+        #adding category features to all_features
         all_features.update(cat_features)
         cat_label[cat] = label
         for i in cat_files:
             all_files_labels[i] = label
 
     print "---------------------"
-    print "## computing the visual words via k-means"
+    print "## computing the visual words via k-means clustering"
     all_features_array = dict2numpy(all_features)
     nfeatures = all_features_array.shape[0]
     nclusters = int(sqrt(nfeatures))
