@@ -1,3 +1,4 @@
+from __future__ import division
 import libsvm
 import argparse
 from cPickle import load
@@ -65,8 +66,51 @@ print "Test Data Classification with SVM"
 
 #print libsvm.test(HISTOGRAMS_FILE, model_file)
 
+#classifier accuracy
+kanclass = 0
+engclass = 0
+kantotal = 0
+engtotal = 0
+
+print filenames
+
+for i in filenames:
+  if i.split('.')[0].endswith('0'):
+    kantotal += 1
+  else:
+    engtotal += 1
+
+kanmisclass = []
+engmisclass = []
+
 for index,i in enumerate(libsvm.test(HISTOGRAMS_FILE,model_file)):
   print 'File:',filenames[index]
-  print 'Classification:',i
+  if i == 0 :
+    print 'Classification:','kannada'
+  else:
+    print 'Classification:','english'
+  if filenames[index].split('.')[0].endswith('0') and i == 0:
+    kanclass += 1
+  if not filenames[index].split('.')[0].endswith('0') and i == 1:
+    engclass += 1
+
+  if filenames[index].split('.')[0].endswith('0') and i == 1:
+    kanmisclass.append(filenames[index])
+
+  if not filenames[index].split('.')[0].endswith('0') and i == 0:
+    engmisclass.append(filenames[index])
+  
+
+print 'Classifier Accuracy:'
+
+print 'Kannada match accuracy',float(kanclass/kantotal)*100
+print  'English match accuracy',float(engclass/engtotal)*100
 
 
+print 'Misclassified words'
+print 'Kannada'
+for i in kanmisclass:
+  print i
+print 'English'
+for i in engmisclass:
+  print i

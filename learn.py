@@ -171,6 +171,7 @@ if __name__ == '__main__':
     print "model file: " + datasetpath + model_file
     print "codebook file: " + datasetpath + CODEBOOK_FILE
     print "category    ==>  label"
+
     for cat in cat_label:
         print '{0:13} ==> {1:6d}'.format(cat, cat_label[cat])
 
