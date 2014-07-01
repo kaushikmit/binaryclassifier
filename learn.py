@@ -5,6 +5,7 @@ from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros
 import scipy.cluster.vq as vq
 import libsvm
 from cPickle import dump, HIGHEST_PROTOCOL
+import matplotlib.pyplot as plt
 import argparse
 
 
@@ -12,7 +13,7 @@ EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
 DATASETPATH = '../dataset'
 PRE_ALLOCATION_BUFFER = 1000  # for sift
 HISTOGRAMS_FILE = 'trainingdata.svm'
-K_THRESH = 1  # early stopping threshold for kmeans originally at 1e-5, increased for speedup
+K_THRESH = 1  
 CODEBOOK_FILE = 'codebook.file'
 
 def parse_arguments():
@@ -76,15 +77,16 @@ def computeHistograms(codebook, descriptors):
     histogram_of_words, bin_edges = histogram(code,
                                               bins=range(codebook.shape[0] + 1),
                                               normed=True)
+    #plt.hist(histogram_of_words,bin_edges)
+    #plt.show()
     return histogram_of_words
 
 
-
 def writeHistogramsToFile(nwords, labels, fnames, all_word_histgrams, features_fname):
-    data_rows = zeros(nwords + 1)  # +1 for the category label
+    data_rows = zeros(nwords + 1) # +1 for the category label
     for fname in fnames:
         histogram = all_word_histgrams[fname]
-        if (histogram.shape[0] != nwords):  # scipy deletes empty clusters
+        if (histogram.shape[0] != nwords):  # to delete empty clusters
             nwords = histogram.shape[0]
             data_rows = zeros(nwords + 1)
             print 'nclusters have been reduced to ' + str(nwords)
@@ -105,6 +107,7 @@ if __name__ == '__main__':
     datasetpath = args.d
     cats = get_categories(datasetpath)
     ncats = len(cats)
+
     print "searching for folders at " + datasetpath
     #exception for no categories
     if ncats < 1:
@@ -144,14 +147,14 @@ if __name__ == '__main__':
         dump(codebook, f, protocol=HIGHEST_PROTOCOL)
 
     print "---------------------"
-    print "## compute the visual words histograms for each image"
+    print "compute the visual words histograms for each image"
     all_word_histgrams = {}
     for imagefname in all_features:
         word_histgram = computeHistograms(codebook, all_features[imagefname])
         all_word_histgrams[imagefname] = word_histgram
 
     print "---------------------"
-    print "## write the histograms to file to pass it to the svm"
+    print "write the histograms to file to pass it to the svm"
     writeHistogramsToFile(nclusters,
                           all_files_labels,
                           all_files,
@@ -159,15 +162,15 @@ if __name__ == '__main__':
                           datasetpath + HISTOGRAMS_FILE)
 
     print "---------------------"
-    print "## train svm"
+    print "train svm"
     c, g, rate, model_file = libsvm.grid(datasetpath + HISTOGRAMS_FILE,
                                          png_filename='grid_res_img_file.png')
 
     print "--------------------"
-    print "## outputting results"
+    print "outputting results"
     print "model file: " + datasetpath + model_file
     print "codebook file: " + datasetpath + CODEBOOK_FILE
-    print "category      ==>  label"
+    print "category    ==>  label"
     for cat in cat_label:
         print '{0:13} ==> {1:6d}'.format(cat, cat_label[cat])
 
