@@ -1,3 +1,4 @@
+import time
 from os.path import exists, isdir, basename, join, splitext
 import sift
 from glob import glob
@@ -16,6 +17,8 @@ HISTOGRAMS_FILE = 'trainingdata.svm'
 K_THRESH = 1  
 CODEBOOK_FILE = 'codebook.file'
 
+count = 0
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='train a visual bag of words model')
     parser.add_argument('-d', help='path to the dataset', required=False, default=DATASETPATH)
@@ -30,6 +33,7 @@ def get_categories(datasetpath):
     cat_paths.sort()
     #storing the categories
     cats = [basename(cat_path) for cat_path in cat_paths]
+
     return cats
 
 
@@ -68,6 +72,9 @@ def extractSift(input_files):
         print "gathering sift features for", fname,
         locs, descriptors = sift.read_features_from_file(features_fname)
         print descriptors.shape
+        global count
+        count += 1 
+        print 'count',count
         all_features_dict[fname] = descriptors
 
     return all_features_dict
@@ -127,10 +134,16 @@ if __name__ == '__main__':
         #getting dictionary of feature descriptors
         cat_features = extractSift(cat_files)
         all_files += cat_files
-        #adding category features to all_features
+        #adding category features to all_features which is a collection of dictionaries
+        #optimized updation
+        a=time.time()
+        print 'before updation'
         all_features.update(cat_features)
+        print 'after updation'
+        b=time.time()
+        print 'finished updating and time is :',b-a
         cat_label[cat] = label
-        for i in cat_files:
+        for i in cat_files: 
             all_files_labels[i] = label
 
     print "---------------------"
@@ -142,6 +155,8 @@ if __name__ == '__main__':
                                              nclusters,
                                              thresh=K_THRESH)
 
+    
+    #pickling the codebookfile
     with open(datasetpath + CODEBOOK_FILE, 'wb') as f:
 
         dump(codebook, f, protocol=HIGHEST_PROTOCOL)
@@ -160,6 +175,7 @@ if __name__ == '__main__':
                           all_files,
                           all_word_histgrams,
                           datasetpath + HISTOGRAMS_FILE)
+
 
     print "---------------------"
     print "train svm"
